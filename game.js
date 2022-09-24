@@ -2,18 +2,21 @@
 let buttonColours = ["red", "blue", "green", "yellow"];
 let gamePattern = [];
 let userClickedPattern = [];
+let sequenceStarted = false;
+let level = 0;
+let gameInProgress = false;
 //endregion
 
 //region Events
-let gameStarted = false;
 $(function () {
     $(document).on("keydown", function (evt) {
-        if (!gameStarted && evt.key === "a") {
-            gameStarted = true;
+        if (!gameInProgress && evt.key === "a") {
+            gameInProgress = true;
             nextSequence();
         }
     });
 });
+
 
 $("." + "btn").on("click", function () {
     if (!sequenceStarted) {
@@ -26,18 +29,11 @@ $("." + "btn").on("click", function () {
     makeSound(userChosenColour);
     animatePress(userChosenColour);
 
-    let answer = checkAnswer();
-
-    if (!answer) {
-        $("h1").text("You lost!");
-    }
+    checkAnswer();
 });
 //endregion
 
 //region Helper functions
-let sequenceStarted = false;
-let level = 0;
-
 function nextSequence() {
     let randomNumber = Math.floor(Math.random() * 4);
     let randomChosenColour = buttonColours[randomNumber];
@@ -91,25 +87,43 @@ function checkAnswer() {
     let indexLatestClick = userClickedPattern.length - 1;
     if (userClickedPattern[indexLatestClick].localeCompare(gamePattern[indexLatestClick]) !== 0) {
         console.log("Wrong");
-        return false;
+        failed();
+        return;
     }
     console.log("Success");
     if (userClickedPattern.length === gamePattern.length) {
         resetForNewSequence();
     }
-    return true;
 }
 
-/*If the complete user sequence is correct:
-* - Disable the user's ability to click buttons
-* - Update the game pattern
-* - Enable the user's ability to click buttons, having reset the user clicked pattern*/
 function resetForNewSequence() {
-    userClickedPattern = [];
     sequenceStarted = false;
+    userClickedPattern = [];
     setTimeout(function () {
         nextSequence();
     }, 1000);
+}
+
+function failed() {
+    sequenceStarted = false;
+
+    $("h1").text("Game Over, Press Key \"A\" to Restart");
+    $("body").addClass("game-over");
+    setTimeout(function () {
+        $("body").removeClass("game-over");
+    }, 200);
+
+    let gameLost = new Audio("sounds/wrong.mp3");
+    gameLost.play();
+
+    reset();
+}
+
+function reset() {
+    gameInProgress = false;
+    gamePattern = [];
+    userClickedPattern = [];
+    level = 0;
 }
 
 //endregion
